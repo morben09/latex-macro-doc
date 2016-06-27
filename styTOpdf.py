@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # created in 06/2016 by Robin Jacob
 # using parts of the latex template from the "VAdF"-internship at the TU Darmstadt during SoSe 2016
 
