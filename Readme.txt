@@ -16,6 +16,10 @@ IMPORTANT FOR A GOOD FORMATTING IN THE TEX-FILE/PDF:
 %	-\renewcommand{}{}
 %	-\DeclareMathOperator{}{}
 
+CARE:
+- In .sty files, use \ensuremath{} instead of $$ to prevent compiling issues
+- If you renew a command with input parameters, make sure to declare the input parameters for the new command as well
+
 
 HOW TO USE:
 - Make sure you have Python and LaTeX installed, if not do so!

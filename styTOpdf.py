@@ -20,7 +20,7 @@ def read():
 				print('ERROR: ' + '\''+d+'\'' + ' NOT existant, try again!')
 			else:
 				list.append(d)
-				print(d + ' hinzugefügt!')
+				print(d + ' added!')
 	return list
 			
 def write(list, mf, title, author, subtitle):
@@ -42,19 +42,19 @@ def write(list, mf, title, author, subtitle):
 						if "%%%" in line:
 							if command:
 								latex.write("\\hline"+ "\n")
-								latex.write("\\end{tabular}"+ "\n")
+								latex.write("\\end{longtable}"+ "\n")
 								command = False
 							latex.write("\\newpage \n")
 							latex.write("\\chapter{"+line.replace('%','').strip()+"}"+"\n")
 						elif "%%" in line:
 							if command:
 								latex.write("\\hline"+ "\n")
-								latex.write("\\end{tabular}"+ "\n")
+								latex.write("\\end{longtable}"+ "\n")
 								command = False
 							latex.write("\\section{"+line.replace('%','').strip()+"}"+"\n")
 						elif "\def" in line:
 							if not command:
-								latex.write("\\begin{tabular}{||l|r||}"+ "\n")
+								latex.write("\\begin{longtable}{||l|r||}"+ "\n")
 								latex.write("\hline"+ "\n")
 								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
 								tabularbegin = True
@@ -77,7 +77,7 @@ def write(list, mf, title, author, subtitle):
 								latex.write(cmd+pst+" & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting}\\\\"+ "\n")
 						elif line[0] == os.sep:
 							if not command:
-								latex.write("\\begin{tabular}{||l|r||}"+ "\n")
+								latex.write("\\begin{longtable}{||l|r||}"+ "\n")
 								latex.write("\hline"+ "\n")
 								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
 								tabularbegin = True
@@ -101,7 +101,7 @@ def write(list, mf, title, author, subtitle):
 								latex.write("$"+cmd+"$ & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting}\\\\"+ "\n")
 			if tabularbegin:
 				latex.write("\\hline"+ "\n")
-				latex.write("\\end{tabular}"+ "\\newpage")
+				latex.write("\\end{longtable}"+ "\\newpage")
 			latexfiles.append(path+os.sep+mf+os.sep+file+'.tex')
 			latex.close()		
 			fl.close()
@@ -123,6 +123,7 @@ def writemainfile (mfiles, mfilename, title, author, subtitle):
 	f.write("\\usepackage[ngerman]{babel} "+"\n")
 	f.write("\\usepackage{framed}"+"\n")
 	f.write("\\usepackage{amsmath}"+"\n")
+	f.write("\\usepackage{longtable}"+"\n")
 	f.write("\\usepackage{listings}"+"\n")
 	f.write("\\usepackage{hhline}"+"\n")
 	for pck in mfiles:
@@ -146,7 +147,7 @@ def executeThis():
 	existant = True
 	while existant:
 		if os.path.isdir(path+os.sep+mainfile):
-                        print(path+os.sep+mainfile)
+			print(path+os.sep+mainfile)
 			mainfile = input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
 		else:
 			existant = False
@@ -188,4 +189,3 @@ while go:
 		if not ((cont == "y") or (cont == "Y")):
 			go = False
 			input("End the program with any key...")
-			
