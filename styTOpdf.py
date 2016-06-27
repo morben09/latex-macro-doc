@@ -140,7 +140,7 @@ def writemainfile (mfiles, mfilename, title, author, subtitle):
 	print("Main .tex File created ("+mfilename+".tex)!")
 	
 	
-def exec():
+def executeThis():
 	mainfile = input("Please input the desired name of the final LaTeX file:  \n> ")
 	existant = True
 	while existant:
@@ -170,7 +170,7 @@ print("||                                                                       
 print("||This script converts .sty files into pdf files with the translations in between the commands and the symbols. ||")
 print("==================================================================================================================")
 while go:
-		out = exec()
+		out = executeThis()
 		create = input("Do you want to create a PDF file? Type 'y'/'Y' for yes or anything else for no! \n> ")
 		if create == 'y' or create == 'Y':
 			if out:
