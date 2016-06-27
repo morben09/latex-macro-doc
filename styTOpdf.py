@@ -7,6 +7,7 @@ import os
 import shutil
 
 path = os.path.dirname(os.path.abspath(__file__))
+print(path)
 
 def read():
 	path = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +16,7 @@ def read():
 	while d != "end":
 		d = input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
 		if d != 'end':
-			if (not os.path.isfile(path+'\\'+ d)) and (d != 'end'):
+			if (not os.path.isfile(path+os.sep+ d)) and (d != 'end'):
 				print('ERROR: ' + '\''+d+'\'' + ' NOT existant, try again!')
 			else:
 				list.append(d)
@@ -27,9 +28,9 @@ def write(list, mf, title, author, subtitle):
 	if list:
 		#iterates over all selected files
 		for file in list:
-			fl = open(path+'\\'+file, 'r')
-			shutil.copy2(path+'\\'+file, path+'\\'+mf+'\\'+file)
-			latex = open(path+'\\'+mf+'\\'+file+'.tex', 'w')
+			fl = open(path+os.sep+file, 'r')
+			shutil.copy2(path+os.sep+file, path+os.sep+mf+os.sep+file)
+			latex = open(path+os.sep+mf+os.sep+file+'.tex', 'w')
 			tabularbegin = False									#ensure that at the end no table is closed without a table opened before (avoiding latex error)
 			command = False
 			#iterates over all lines in file f1
@@ -58,8 +59,8 @@ def write(list, mf, title, author, subtitle):
 								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
 								tabularbegin = True
 							command = True
-							startfbs = line.find('\\')					#startfirstbackslash
-							startsbs = line[startfbs+1:].find('\\')		#startsecondbackslash
+							startfbs = line.find(os.sep)					#startfirstbackslash
+							startsbs = line[startfbs+1:].find(os.sep)		#startsecondbackslash
 							endsbs = line.find('{')
 							if line[startsbs+1:endsbs].find('#') == -1:
 								cmd = line[startsbs+1:endsbs]
@@ -74,7 +75,7 @@ def write(list, mf, title, author, subtitle):
 									post.append("{"+chr(counter+97)+"}")
 								pst = ''.join(post)
 								latex.write(cmd+pst+" & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting}\\\\"+ "\n")
-						elif line[0] == '\\':
+						elif line[0] == os.sep:
 							if not command:
 								latex.write("\\begin{tabular}{||l|r||}"+ "\n")
 								latex.write("\hline"+ "\n")
@@ -101,7 +102,7 @@ def write(list, mf, title, author, subtitle):
 			if tabularbegin:
 				latex.write("\\hline"+ "\n")
 				latex.write("\\end{tabular}"+ "\\newpage")
-			latexfiles.append(path+'\\'+mf+'\\'+file+'.tex')
+			latexfiles.append(path+os.sep+mf+os.sep+file+'.tex')
 			latex.close()		
 			fl.close()
 			print(file+".tex created")
@@ -114,7 +115,7 @@ def write(list, mf, title, author, subtitle):
 	
 	
 def writemainfile (mfiles, mfilename, title, author, subtitle):
-	f = open(path+'\\'+mfilename+'\\'+mfilename+'.tex', 'w')
+	f = open(path+os.sep+mfilename+os.sep+mfilename+'.tex', 'w')
 	f.write("\\documentclass[scrreprt,colorback,accentcolor=tud9b, 11pt]{tudreport}"+"\n")
 	f.write("\\usepackage[utf8]{inputenc}"+"\n")
 	f.write("\\usepackage[T1]{fontenc}"+"\n")
@@ -144,13 +145,14 @@ def executeThis():
 	mainfile = input("Please input the desired name of the final LaTeX file:  \n> ")
 	existant = True
 	while existant:
-		if os.path.isdir(path+'\\'+mainfile):
+		if os.path.isdir(path+os.sep+mainfile):
+                        print(path+os.sep+mainfile)
 			mainfile = input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
 		else:
 			existant = False
 			if not os.path.exists(path+mainfile):
-				os.makedirs(path+'\\'+mainfile)
-				open(path+'\\'+mainfile+'\\'+mainfile+'.tex', 'w')
+				os.makedirs(path+os.sep+mainfile)
+				open(path+os.sep+mainfile+os.sep+mainfile+'.tex', 'w')
 			
 	title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
 	author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
