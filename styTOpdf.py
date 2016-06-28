@@ -14,7 +14,7 @@ def read():
 	d = "predef";
 	list = [];
 	while d != "end":
-		d = input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
+		d = raw_input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
 		if d != 'end':
 			if (not os.path.isfile(path+os.sep+ d)) and (d != 'end'):
 				print('ERROR: ' + '\''+d+'\'' + ' NOT existant, try again!')
@@ -143,21 +143,21 @@ def writemainfile (mfiles, mfilename, title, author, subtitle):
 	
 	
 def executeThis():
-	mainfile = input("Please input the desired name of the final LaTeX file:  \n> ")
+	mainfile = raw_input("Please input the desired name of the final LaTeX file:  \n> ")
 	existant = True
 	while existant:
 		if os.path.isdir(path+os.sep+mainfile):
 			print(path+os.sep+mainfile)
-			mainfile = input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
+			mainfile = raw_input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
 		else:
 			existant = False
 			if not os.path.exists(path+mainfile):
 				os.makedirs(path+os.sep+mainfile)
 				open(path+os.sep+mainfile+os.sep+mainfile+'.tex', 'w')
 			
-	title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
-	subtitle = input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
+	title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
+	author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
+	subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
 	lst = read()
 	print("All files added!")
 	write(lst, mainfile, title, author, subtitle)
@@ -174,7 +174,7 @@ print("||This script converts .sty files into pdf files with the translations in
 print("==================================================================================================================")
 while go:
 		out = executeThis()
-		create = input("Do you want to create a PDF file? Type 'y'/'Y' for yes or anything else for no! \n> ")
+		create = raw_input("Do you want to create a PDF file? Type 'y'/'Y' for yes or anything else for no! \n> ")
 		if create == 'y' or create == 'Y':
 			if out:
 				os.chdir(out)
@@ -184,8 +184,8 @@ while go:
 				os.chdir(path)
 			else:
 				print("No PDF created, no files were selected!")
-		cont = input("Do you want to create another file? Type 'y'/'Y' for yes or anything else for no! \n> ")
+		cont = raw_input("Do you want to create another file? Type 'y'/'Y' for yes or anything else for no! \n> ")
 		print("\n\n")
 		if not ((cont == "y") or (cont == "Y")):
 			go = False
-			input("End the program with any key...")
+			raw_input("End the program with any key...")
