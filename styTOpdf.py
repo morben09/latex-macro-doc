@@ -151,7 +151,7 @@ def executeThis():
 		if os.path.isdir(path+os.sep+mainfile):
 			print(path+os.sep+mainfile)
 			try: mainfile = raw_input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
-			except NameError: input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
+			except NameError: mainfile = input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
 		else:
 			existant = False
 			if not os.path.exists(path+mainfile):
