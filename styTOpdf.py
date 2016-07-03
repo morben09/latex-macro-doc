@@ -60,8 +60,8 @@ def write(list, mf, title, author, subtitle):
 								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
 								tabularbegin = True
 							command = True
-							startfbs = line.find(os.sep)					#startfirstbackslash
-							startsbs = line[startfbs+1:].find(os.sep)		#startsecondbackslash
+							startfbs = line.find("\\")					#startfirstbackslash
+							startsbs = line[startfbs+1:].find("\\")		#startsecondbackslash
 							endsbs = line.find('{')
 							if line[startsbs+1:endsbs].find('#') == -1:
 								cmd = line[startsbs+1:endsbs]
@@ -76,7 +76,7 @@ def write(list, mf, title, author, subtitle):
 									post.append("{"+chr(counter+97)+"}")
 								pst = ''.join(post)
 								latex.write(cmd+pst+" & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting}\\\\"+ "\n")
-						elif line[0] == os.sep:
+						elif line[0] == "\\":
 							if not command:
 								latex.write("\\begin{longtable}{||l|r||}"+ "\n")
 								latex.write("\hline"+ "\n")
