@@ -160,8 +160,8 @@ def executeThis():
 			
 	try: title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
 	except NameError: title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	try: author = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	except NameError: author = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
+	try: author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
+	except NameError: author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
 	try: subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
 	except NameError: subtitle = input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
 	#title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
