@@ -60,8 +60,8 @@ def write(list, mf, title, author, subtitle):
 								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
 								tabularbegin = True
 							command = True
-							startfbs = line.find(os.sep)					#startfirstbackslash
-							startsbs = line[startfbs+1:].find(os.sep)		#startsecondbackslash
+							startfbs = line.find("\\")					#startfirstbackslash
+							startsbs = line[startfbs+1:].find("\\")		#startsecondbackslash
 							endsbs = line.find('{')
 							if line[startsbs+1:endsbs].find('#') == -1:
 								cmd = line[startsbs+1:endsbs]
@@ -160,8 +160,8 @@ def executeThis():
 			
 	try: title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
 	except NameError: title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	try: author = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	except NameError: author = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
+	try: author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
+	except NameError: author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
 	try: subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
 	except NameError: subtitle = input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
 	#title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
