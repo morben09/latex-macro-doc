@@ -5,6 +5,8 @@ IMPORTANT FOR A GOOD FORMATTING IN THE TEX-FILE/PDF:
 % 	While reading, all lines with one %-symbol (%) at first are being ignored.
 % 	While reading, all lines with two %-symbols (%%) are being interpreted as a title.
 % 	While reading, all lines with more than two %-symbols are being interpreted as a new chapter.
+% 	Comments after the tag %-% are inserted in the 'comment' column of the last command.
+% 	The minimal_example.sty document this comment system.
 
 % Commands with input parameters only works with up to nine parameters. (else compiling error in LaTeX)
 
@@ -32,3 +34,4 @@ Notice:
 - Make sure you have read and write permissions in your working directory.
 - The script will create a folder named as your desired filename in your working directory where all the needed files will be put in.
 	-> Therefore it is possible to simply store all of your .sty files in one directory and create pdfs as you need them.
+- Tab completion is available for quickly choosing the .sty files to include.

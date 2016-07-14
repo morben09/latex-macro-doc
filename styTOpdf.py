@@ -5,6 +5,7 @@
 
 import os
 import shutil
+import readline
 
 path = os.path.dirname(os.path.abspath(__file__))
 print(path)
@@ -14,11 +15,17 @@ def read():
 	d = "predef";
 	list = [];
 	while d != "end":
+		#Activate tab completion for paths
+		readline.parse_and_bind("tab: complete")
 		try: d = raw_input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
 		except NameError: d = input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
+
+				#Deactivate tab completion for paths
+		readline.parse_and_bind('tab: self-insert')
+
 		if d != 'end':
 			if (not os.path.isfile(path+os.sep+ d)) and (d != 'end'):
-				print('ERROR: ' + '\''+d+'\'' + ' NOT existant, try again!')
+				print('ERROR: ' + '\''+d+'\'' + ' NOT existent, try again!')
 			else:
 				list.append(d)
 				print(d + ' added!')
@@ -34,30 +41,38 @@ def write(list, mf, title, author, subtitle):
 			latex = open(path+os.sep+mf+os.sep+file+'.tex', 'w')
 			tabularbegin = False									#ensure that at the end no table is closed without a table opened before (avoiding latex error)
 			command = False
+			comment_flag = r'%-%'
+			chapter_flag = r'%%%'
+			section_flag = r'%%'
+			comment = ''
 			#iterates over all lines in file f1
 			for line in fl:
-				#print(line)
-				append = []
 				if line:
 					if line.find("\catcode") is not 0:
-						if "%%%" in line:
+						if chapter_flag in line:
 							if command:
+								latex.write(comment+"\n\\\\\n")
+								comment = ''
 								latex.write("\\hline"+ "\n")
 								latex.write("\\end{longtable}"+ "\n")
 								command = False
 							latex.write("\\newpage \n")
 							latex.write("\\chapter{"+line.replace('%','').strip()+"}"+"\n")
-						elif "%%" in line:
+						elif section_flag in line:
 							if command:
+								latex.write(comment+"\n\\\\\n")
 								latex.write("\\hline"+ "\n")
 								latex.write("\\end{longtable}"+ "\n")
 								command = False
 							latex.write("\\section{"+line.replace('%','').strip()+"}"+"\n")
 						elif "\def" in line:
-							if not command:
-								latex.write("\\begin{longtable}{||l|r||}"+ "\n")
+							if command:
+								latex.write(comment+"\n\\\\\n")
+								comment = ''
+							else:
+								latex.write("\\begin{longtable}{||l|r|l||}"+ "\n")
 								latex.write("\hline"+ "\n")
-								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
+								latex.write("\\textbf{symbol} & \\textbf{shortcut} & \\textbf{comment} \\\\\hhline{|=|=|=|}"+ "\n")
 								tabularbegin = True
 							command = True
 							startfbs = line.find("\\")					#startfirstbackslash
@@ -65,7 +80,7 @@ def write(list, mf, title, author, subtitle):
 							endsbs = line.find('{')
 							if line[startsbs+1:endsbs].find('#') == -1:
 								cmd = line[startsbs+1:endsbs]
-								latex.write(cmd+" & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting}\\\\"+ "\n")
+								latex.write(cmd+" & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting} & ")
 							else:
 								hashtag =  line.find('#')
 								cmd = line[startsbs+1:hashtag]
@@ -75,12 +90,15 @@ def write(list, mf, title, author, subtitle):
 								for counter in range(0,cnt):
 									post.append("{"+chr(counter+97)+"}")
 								pst = ''.join(post)
-								latex.write(cmd+pst+" & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting}\\\\"+ "\n")
+								latex.write(cmd+pst+" & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting} & ")
 						elif line[0] == "\\":
-							if not command:
-								latex.write("\\begin{longtable}{||l|r||}"+ "\n")
+							if command:
+								latex.write(comment+"\n\\\\\n")
+								comment = ''
+							else:
+								latex.write("\\begin{longtable}{||l|r|l||}"+ "\n")
 								latex.write("\hline"+ "\n")
-								latex.write("\\textbf{symbol} & \\textbf{shortcut} \\\\\hhline{|=|=|}"+ "\n")
+								latex.write("\\textbf{symbol} & \\textbf{shortcut} & \\textbf{comment} \\\\\hhline{|=|=|=|}"+ "\n")
 								tabularbegin = True
 							command = True
 							startfb = line.find('{')					#startfirstbracket
@@ -95,13 +113,16 @@ def write(list, mf, title, author, subtitle):
 								for counter in range(0,cnt):
 									post.append("{"+chr(counter+97)+"}")
 								pst = ''.join(post)
-								latex.write("$"+cmd+pst+"$ & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting}\\\\"+ "\n")
+								latex.write("$"+cmd+pst+"$ & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting} & ")
 							else:
-								startsb = endfb + line[endfb:].find('{')	#startsecondbracket
-								endsb = line.rfind('}')						#endsecondbracket
-								latex.write("$"+cmd+"$ & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting}\\\\"+ "\n")
+								latex.write("$"+cmd+"$ & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting} & ")
+
+						if comment_flag in line:
+							comment_begin = line.find(comment_flag)+len(comment_flag)
+							comment = line[comment_begin:].strip()
+
 			if tabularbegin:
-				latex.write("\\hline"+ "\n")
+				latex.write(comment+"\n"+"\\\\"+"\\hline"+ "\n")
 				latex.write("\\end{longtable}"+ "\\newpage")
 			latexfiles.append(path+os.sep+mf+os.sep+file+'.tex')
 			latex.close()		
@@ -131,9 +152,16 @@ def writemainfile (mfiles, mfilename, title, author, subtitle):
 		pck2 = pck[0:pck.rfind('.')]
 		f.write("\\usepackage{"+pck2+"}"+"\n")
 	f.write("\\begin{document}"+"\n")
-	f.write("\\title{"+title+"}"+"\n")
-	f.write("\\subtitle{Shortcuts created by: "+author+"\\\\"+subtitle+"}"+"\n")
-	f.write("\\author{"+author+"}"+"\n")
+	if title and (not title.isspace()):
+		f.write("\\title{"+title+"}"+"\n")
+	else:
+		f.write("\\title{Macro documentation}"+"\n")
+	if author and (not author.isspace()):
+		f.write("\\subtitle{Shortcuts created by: "+author+"\\\\"+subtitle+"}"+"\n")
+		f.write("\\author{"+author+"}"+"\n")
+	else:
+		if subtitle and (not subtitle.isspace()):
+			f.write("\\subtitle{"+subtitle+"}"+"\n")
 	f.write("\\maketitle"+"\n")
 	f.write("\\tableofcontents"+"\n")
 	f.write("\\newpage"+"\n")
@@ -145,13 +173,13 @@ def writemainfile (mfiles, mfilename, title, author, subtitle):
 	
 def executeThis():
 	try: mainfile = raw_input("Please input the desired name of the final LaTeX file:  \n> ")
-	except NameError: mainfile = input("Please input the desired name of the final LaTeX file:  \n> ")
+	except NameError: mainfile = input("Please input the desired name of the final LaTeX file:	\n> ")
 	existant = True
 	while existant:
 		if os.path.isdir(path+os.sep+mainfile):
 			print(path+os.sep+mainfile)
 			try: mainfile = raw_input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
-			except NameError: mainfile = input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
+			except NameError: mainfile = input("File/path already existent. Please input another name of the final LaTeX file:	\n> ")
 		else:
 			existant = False
 			if not os.path.exists(path+mainfile):
@@ -177,8 +205,8 @@ def executeThis():
 
 go = True
 print("==================================================================================================================")
-print("||Created in June 2016 by Robin Jacob                                                                           ||")
-print("||                                                                                                              ||")
+print("||Created in June 2016 by Robin Jacob																		   ||")
+print("||																											   ||")
 print("||This script converts .sty files into pdf files with the translations in between the commands and the symbols. ||")
 print("==================================================================================================================")
 while go:
@@ -189,9 +217,12 @@ while go:
 		if create == 'y' or create == 'Y':
 			if out:
 				os.chdir(out)
-				os.system("pdflatex "+out+".tex")
-				os.system("pdflatex "+out+".tex")
-				print("\n"+out+".pdf created! \n")
+				err_code = os.system("pdflatex -interaction nonstopmode "+out+".tex")
+				err_code |=os.system("pdflatex -interaction nonstopmode "+out+".tex")
+				if (err_code==0):
+					print("\n"+out+".pdf successfully created! \n")
+				else:
+					print("\nWARNING: The compilation of "+out+".tex returned a non zero exit code.\n         Please check the output.\n")
 				os.chdir(path)
 			else:
 				print("No PDF created, no files were selected!")
