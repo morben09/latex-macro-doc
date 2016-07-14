@@ -1,36 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # created in 06/2016 by Robin Jacob
-# using parts of the latex template from the "VAdF"-internship at the TU Darmstadt during SoSe 2016
+# edited by Robin Jacob, Thorben Casper and Yun Ouedraogo
+# using parts of the latex template from the "VAdF"-lab at the TU Darmstadt during SoSe 2016
 
 import os
 import shutil
 import readline
+import argparse
 
 path = os.path.dirname(os.path.abspath(__file__))
 print(path)
 
-def read():
-	path = os.path.dirname(os.path.abspath(__file__))
-	d = "predef";
-	list = [];
-	while d != "end":
-		#Activate tab completion for paths
-		readline.parse_and_bind("tab: complete")
-		try: d = raw_input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
-		except NameError: d = input("Insert a source-filename (including ending such as .sty) or type 'end' to end the input:  \n> ")
-
-				#Deactivate tab completion for paths
-		readline.parse_and_bind('tab: self-insert')
-
-		if d != 'end':
-			if (not os.path.isfile(path+os.sep+ d)) and (d != 'end'):
-				print('ERROR: ' + '\''+d+'\'' + ' NOT existent, try again!')
-			else:
-				list.append(d)
-				print(d + ' added!')
-	return list
-			
 def write(list, mf, title, author, subtitle):
 	latexfiles = []
 	if list:
@@ -129,14 +110,14 @@ def write(list, mf, title, author, subtitle):
 			fl.close()
 			print(file+".tex created")
 			
-		writemainfile(list, mf, title, author, subtitle)
+		writefilename(list, mf, title, author, subtitle)
 	else:
 		shutil.rmtree(mf)
 		print("No data selected, aborting...")
 		
 	
 	
-def writemainfile (mfiles, mfilename, title, author, subtitle):
+def writefilename (mfiles, mfilename, title, author, subtitle):
 	f = open(path+os.sep+mfilename+os.sep+mfilename+'.tex', 'w')
 	f.write("\\documentclass[scrreprt,colorback,accentcolor=tud9b, 11pt]{tudreport}"+"\n")
 	f.write("\\usepackage[utf8]{inputenc}"+"\n")
@@ -172,64 +153,61 @@ def writemainfile (mfiles, mfilename, title, author, subtitle):
 	
 	
 def executeThis():
-	try: mainfile = raw_input("Please input the desired name of the final LaTeX file:  \n> ")
-	except NameError: mainfile = input("Please input the desired name of the final LaTeX file:	\n> ")
-	existant = True
-	while existant:
-		if os.path.isdir(path+os.sep+mainfile):
-			print(path+os.sep+mainfile)
-			try: mainfile = raw_input("File/path already existent. Please input another name of the final LaTeX file:  \n> ")
-			except NameError: mainfile = input("File/path already existent. Please input another name of the final LaTeX file:	\n> ")
-		else:
-			existant = False
-			if not os.path.exists(path+mainfile):
-				os.makedirs(path+os.sep+mainfile)
-				open(path+os.sep+mainfile+os.sep+mainfile+'.tex', 'w')
+        parser = argparse.ArgumentParser()
+        parser.add_argument("sty_file", help="the .sty-file for which a .pdf-file shall be created")
+        parser.add_argument("-c","--createPDF", help="use if you want to create the .pdf directly",action="store_true")
+        parser.add_argument("-o","--overwrite", help="overwrites any existent files/folders if used (USE WITH CARE!)", action="store_true")
+        parser_args = parser.parse_args()
+        createPDF = parser_args.createPDF
+        filename = os.path.splitext(parser_args.sty_file)[0] # splits filename into base and extension and chooses base
+#	try: filename = raw_input("Please input the desired name of the final LaTeX file:  \n> ")
+#	except NameError: filename = input("Please input the desired name of the final LaTeX file:	\n> ")
+        # checks if file/path already exists
+        if os.path.isdir(path+os.sep+filename):
+                print(path+os.sep+filename)
+                if not parser_args.overwrite:
+                        try: overwrite = raw_input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):  \n> ")
+                        except NameError: overwrite = input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):	\n> ")
+                if parser_args.overwrite or overwrite:
+                       shutil.rmtree(filename) 
+                else:
+                       return                
+        os.makedirs(path+os.sep+filename)
+        open(path+os.sep+filename+os.sep+filename+'.tex', 'w')
 			
-	try: title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	except NameError: title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	try: author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
-	except NameError: author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
-	try: subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
-	except NameError: subtitle = input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
+#	try: title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
+#	except NameError: title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
+#	try: author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
+#	except NameError: author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
+#	try: subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
+#	except NameError: subtitle = input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
+        title = ''
+        author = ''
+        subtitle = ''
+
 	#title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
 	#author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
 	#subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
-	lst = read()
-	print("All files added!")
-	write(lst, mainfile, title, author, subtitle)
-	if lst:
-		return mainfile
-	else:
-		return []
+#	files = read(filename)
+        files = [filename+".sty"];
+	print("creates .sty file")
+	write(files, filename, title, author, subtitle)
+        if createPDF:
+                print("starts to create .pdf file")
+                os.chdir(filename)
+                err_code = os.system("pdflatex -interaction nonstopmode "+filename+".tex")
+                err_code |=os.system("pdflatex -interaction nonstopmode "+filename+".tex")
+                if (err_code==0):
+                        print("\n"+filename+".pdf successfully created! \n")
+                else:
+                        print("\nWARNING: The compilation of "+filename+".tex returned a non zero exit code.\n         Please check the output.\n")
+                os.chdir("..")
+        return
 
-go = True
+
 print("==================================================================================================================")
-print("||Created in June 2016 by Robin Jacob																		   ||")
-print("||																											   ||")
+print("||Created in June 2016 by Robin Jacob								               ||")
+print("||													       ||")
 print("||This script converts .sty files into pdf files with the translations in between the commands and the symbols. ||")
 print("==================================================================================================================")
-while go:
-		out = executeThis()
-		try:
-			create = raw_input("Do you want to create a PDF file? Type 'y'/'Y' for yes or anything else for no! \n> ")
-		except NameError: create = input("Do you want to create a PDF file? Type 'y'/'Y' for yes or anything else for no! \n> ")
-		if create == 'y' or create == 'Y':
-			if out:
-				os.chdir(out)
-				err_code = os.system("pdflatex -interaction nonstopmode "+out+".tex")
-				err_code |=os.system("pdflatex -interaction nonstopmode "+out+".tex")
-				if (err_code==0):
-					print("\n"+out+".pdf successfully created! \n")
-				else:
-					print("\nWARNING: The compilation of "+out+".tex returned a non zero exit code.\n         Please check the output.\n")
-				os.chdir(path)
-			else:
-				print("No PDF created, no files were selected!")
-		try: cont = raw_input("Do you want to create another file? Type 'y'/'Y' for yes or anything else for no! \n> ")
-		except NameError: cont = input("Do you want to create another file? Type 'y'/'Y' for yes or anything else for no! \n> ")
-		print("\n\n")
-		if not ((cont == "y") or (cont == "Y")):
-			go = False
-			try: raw_input("End the program with any key...")
-			except NameError: input("End the program with any key...")
+executeThis()

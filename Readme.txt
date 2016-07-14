@@ -27,11 +27,9 @@ HOW TO USE:
 - Make sure you have Python and LaTeX installed, if not do so!
 - Put the styTOpdf.py in the folder where the file which should be translated is in.
 - Start the script by simply clicking at it or start it via your commandline.
-- Follow the steps in the commandline.
 - Done!
 
 Notice:
 - Make sure you have read and write permissions in your working directory.
 - The script will create a folder named as your desired filename in your working directory where all the needed files will be put in.
 	-> Therefore it is possible to simply store all of your .sty files in one directory and create pdfs as you need them.
-- Tab completion is available for quickly choosing the .sty files to include.
