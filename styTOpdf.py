@@ -6,117 +6,143 @@
 
 import os
 import shutil
-import readline
 import argparse
 
 path = os.path.dirname(os.path.abspath(__file__))
 print(path)
+
+def format_section(commands, comments):
+	if ''.join(comments):
+		table_opening = r'\begin{longtable}{||l|r|l||}'+'\n'+r'\hline'+'\n'+r'\textbf{symbol} & \textbf{shortcut} & \textbf{comment} \\'+'\n'+r'\hhline{|=|=|=|}'+'\n'
+		table_closing = r'\hline'+'\n'+r'\end{longtable}'+'\n'
+		command_format = r'${0}$ & \begin{{lstlisting}}'+'\n'+r'{0}'+r' \end{{lstlisting}} & {1}'+'\n'+r'\\' + '\n'
+		contents = ''.join([command_format.format(command, comment) for command, comment in zip(commands, comments)])
+	else:
+		table_opening = r'\begin{longtable}{||l|r||}'+'\n'+r'\hline'+'\n'+r'\textbf{symbol} & \textbf{shortcut}\\'+'\n'+r'\hhline{|=|=|}'+'\n'
+		table_closing = r'\hline'+'\n'+r'\end{longtable}'+'\n'
+		command_format = r'${0}$ & \begin{{lstlisting}}'+'\n'+r'{0}'+r' \end{{lstlisting}}\\' + '\n'
+		contents = ''.join([command_format.format(command) for command in commands])
+
+	return ''.join([table_opening, contents, table_closing])
+
 
 def write(list, mf, title, author, subtitle):
 	latexfiles = []
 	if list:
 		#iterates over all selected files
 		for file in list:
-			fl = open(path+os.sep+file, 'r')
+
+			with open(path+os.sep+file, 'r') as fl:
+				sty_contents = fl.read().split('\n')
+
 			shutil.copy2(path+os.sep+file, path+os.sep+mf+os.sep+file)
-			latex = open(path+os.sep+mf+os.sep+file+'.tex', 'w')
+			tex_file = open(path+os.sep+mf+os.sep+file+'.tex', 'w')
 			tabularbegin = False									#ensure that at the end no table is closed without a table opened before (avoiding latex error)
 			command = False
 			comment_flag = r'%-%'
 			chapter_flag = r'%%%'
 			section_flag = r'%%'
-			comment = ''
-			#iterates over all lines in file f1
-			for line in fl:
-				if line:
-					if line.find("\catcode") is not 0:
-						if chapter_flag in line:
-							if command:
-								latex.write(comment+"\n\\\\\n")
-								comment = ''
-								latex.write("\\hline"+ "\n")
-								latex.write("\\end{longtable}"+ "\n")
-								command = False
-							latex.write("\\newpage \n")
-							latex.write("\\chapter{"+line.replace('%','').strip()+"}"+"\n")
-						elif section_flag in line:
-							if command:
-								latex.write(comment+"\n\\\\\n")
-								latex.write("\\hline"+ "\n")
-								latex.write("\\end{longtable}"+ "\n")
-								command = False
-							latex.write("\\section{"+line.replace('%','').strip()+"}"+"\n")
-						elif "\def" in line:
-							if command:
-								latex.write(comment+"\n\\\\\n")
-								comment = ''
-							else:
-								latex.write("\\begin{longtable}{||l|r|l||}"+ "\n")
-								latex.write("\hline"+ "\n")
-								latex.write("\\textbf{symbol} & \\textbf{shortcut} & \\textbf{comment} \\\\\hhline{|=|=|=|}"+ "\n")
-								tabularbegin = True
-							command = True
-							startfbs = line.find("\\")					#startfirstbackslash
-							startsbs = line[startfbs+1:].find("\\")		#startsecondbackslash
-							endsbs = line.find('{')
-							if line[startsbs+1:endsbs].find('#') == -1:
-								cmd = line[startsbs+1:endsbs]
-								latex.write(cmd+" & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting} & ")
-							else:
-								hashtag =  line.find('#')
-								cmd = line[startsbs+1:hashtag]
-								nmbr = line[hashtag+1:endsbs].strip()
-								cnt = int(nmbr)
-								post = []
-								for counter in range(0,cnt):
-									post.append("{"+chr(counter+97)+"}")
-								pst = ''.join(post)
-								latex.write(cmd+pst+" & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting} & ")
-						elif line[0] == "\\":
-							if command:
-								latex.write(comment+"\n\\\\\n")
-								comment = ''
-							else:
-								latex.write("\\begin{longtable}{||l|r|l||}"+ "\n")
-								latex.write("\hline"+ "\n")
-								latex.write("\\textbf{symbol} & \\textbf{shortcut} & \\textbf{comment} \\\\\hhline{|=|=|=|}"+ "\n")
-								tabularbegin = True
-							command = True
-							startfb = line.find('{')					#startfirstbracket
-							endfb = line.find('}')						#endfirstbracket
-							startrb = line.find('[')					#startrectangularbracket
-							endrb = line.find(']')						#endrectangularbracket
-							nmbr = line[startrb+1:endrb].strip()
-							cmd = line[startfb+1:endfb]
-							if line[endfb+1] =='[':
-								post = []
-								cnt = int(nmbr)
-								for counter in range(0,cnt):
-									post.append("{"+chr(counter+97)+"}")
-								pst = ''.join(post)
-								latex.write("$"+cmd+pst+"$ & \\begin{lstlisting}"+"\n"+cmd+pst+" \\end{lstlisting} & ")
-							else:
-								latex.write("$"+cmd+"$ & \\begin{lstlisting}"+"\n"+cmd+" \\end{lstlisting} & ")
 
-						if comment_flag in line:
-							comment_begin = line.find(comment_flag)+len(comment_flag)
-							comment = line[comment_begin:].strip()
+			current_command, current_comment = '', ''
+			current_commands, current_comments = [], []
+
+			# iterates over all lines in file f1
+			for line in sty_contents:
+
+				# Empty lines and catcode statements are not macros
+				if not line or line.find(r'\catcode') is 0:
+					continue
+
+				if chapter_flag in line:
+					if command:
+						current_commands.append(current_command)
+						current_comments.append(current_comment)
+						tex_file.write(format_section(current_commands, current_comments))
+						current_commands, current_comments = [], []
+						current_command, current_comment = '', ''
+						command = False
+					tex_file.write(r'\newpage'+'\n')
+					tex_file.write(r'\chapter{'+line.replace('%','').strip()+'}'+'\n')
+				elif section_flag in line:
+					if command:
+						current_commands.append(current_command)
+						current_comments.append(current_comment)
+						tex_file.write(format_section(current_commands, current_comments))
+						current_commands, current_comments = [], []
+						current_command, current_comment = '', ''
+						command = False
+					tex_file.write(r'\section{'+line.replace('%','').strip()+'}'+'\n')
+				elif r'\def' in line:
+					if command:
+						current_commands.append(current_command)
+						current_comments.append(current_comment)
+						current_command, current_comment = '', ''
+					else:
+						tabularbegin = True
+					command = True
+					startfbs = line.find('\\')					#startfirstbackslash
+					startsbs = line[startfbs+1:].find('\\')		#startsecondbackslash
+					endsbs = line.find('{')
+					if line[startsbs+1:endsbs].find('#') == -1:
+						current_command = line[startsbs+1:endsbs]
+						#tex_file.write(cmd+r' & \begin{lstlisting}'+'\n'+cmd+r' \end{lstlisting} & ')
+					else:
+						hash_index =  line.find('#')
+						cmd = line[startsbs+1:hash_index]
+						nmbr = line[hash_index+1:endsbs].strip()
+						cnt = int(nmbr)
+						post = []
+						for counter in range(0,cnt):
+							post.append('{'+chr(counter+97)+'}')
+						pst = ''.join(post)
+						current_command = cmd+pst
+						#tex_file.write(cmd+pst+r' & \begin{lstlisting}'+'\n'+cmd+pst+r' \end{lstlisting} & ')
+				elif line[0] == '\\':
+					if command:
+						current_commands.append(current_command)
+						current_comments.append(current_comment)
+						current_command, current_comment = '', ''
+					else:
+						tabularbegin = True
+					command = True
+					startfb = line.find('{')					#startfirstbracket
+					endfb = line.find('}')						#endfirstbracket
+					startrb = line.find('[')					#startrectangularbracket
+					endrb = line.find(']')						#endrectangularbracket
+					nmbr = line[startrb+1:endrb].strip()
+					cmd = line[startfb+1:endfb]
+					if line[endfb+1] =='[':
+						post = []
+						cnt = int(nmbr)
+						for counter in range(0,cnt):
+							post.append("{"+chr(counter+97)+"}")
+						pst = ''.join(post)
+						current_command = cmd+pst
+						#tex_file.write('$'+cmd+pst+r'$ & \begin{lstlisting}'+'\n'+cmd+pst+r' \end{lstlisting} & ')
+					else:
+						current_command = cmd
+						#tex_file.write('$'+cmd+r'$ & \begin{lstlisting}'+'\n'+cmd+r' \end{lstlisting} & ')
+
+				if comment_flag in line:
+					comment_begin_index = line.find(comment_flag)+len(comment_flag)
+					current_comment = line[comment_begin_index:].strip()
 
 			if tabularbegin:
-				latex.write(comment+"\n"+"\\\\"+"\\hline"+ "\n")
-				latex.write("\\end{longtable}"+ "\\newpage")
+				current_commands.append(current_command)
+				current_comments.append(current_comment)
+				tex_file.write(format_section(current_commands, current_comments))
+				current_commands, current_comments = [], []
 			latexfiles.append(path+os.sep+mf+os.sep+file+'.tex')
-			latex.close()		
-			fl.close()
+			tex_file.close()
 			print(file+".tex created")
-			
+
 		writefilename(list, mf, title, author, subtitle)
 	else:
 		shutil.rmtree(mf)
 		print("No data selected, aborting...")
-		
-	
-	
+
+
+
 def writefilename (mfiles, mfilename, title, author, subtitle):
 	f = open(path+os.sep+mfilename+os.sep+mfilename+'.tex', 'w')
 	f.write("\\documentclass[scrreprt,colorback,accentcolor=tud9b, 11pt]{tudreport}"+"\n")
@@ -150,64 +176,51 @@ def writefilename (mfiles, mfilename, title, author, subtitle):
 		f.write("\\subfile{"+fe+".tex}"+"\n")
 	f.write("\\end{document}"+"\n")
 	print("Main .tex File created ("+mfilename+".tex)!")
-	
-	
-def executeThis():
-        parser = argparse.ArgumentParser()
-        parser.add_argument("sty_file", help="the .sty-file for which a .pdf-file shall be created")
-        parser.add_argument("-c","--createPDF", help="use if you want to create the .pdf directly",action="store_true")
-        parser.add_argument("-o","--overwrite", help="overwrites any existent files/folders if used (USE WITH CARE!)", action="store_true")
-        parser_args = parser.parse_args()
-        createPDF = parser_args.createPDF
-        filename = os.path.splitext(parser_args.sty_file)[0] # splits filename into base and extension and chooses base
-#	try: filename = raw_input("Please input the desired name of the final LaTeX file:  \n> ")
-#	except NameError: filename = input("Please input the desired name of the final LaTeX file:	\n> ")
-        # checks if file/path already exists
-        if os.path.isdir(path+os.sep+filename):
-                print(path+os.sep+filename)
-                if not parser_args.overwrite:
-                        try: overwrite = raw_input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):  \n> ")
-                        except NameError: overwrite = input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):	\n> ")
-                if parser_args.overwrite or overwrite:
-                       shutil.rmtree(filename) 
-                else:
-                       return                
-        os.makedirs(path+os.sep+filename)
-        open(path+os.sep+filename+os.sep+filename+'.tex', 'w')
-			
-#	try: title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-#	except NameError: title = input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-#	try: author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
-#	except NameError: author = input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
-#	try: subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
-#	except NameError: subtitle = input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
-        title = ''
-        author = ''
-        subtitle = ''
 
-	#title = raw_input("Please input the desired title of your final LaTeX file (optional):  \n> ")
-	#author = raw_input("Please input the name/names of the author(s), divided by commas (optional):  \n> ")
-	#subtitle = raw_input("Please input a subtitle for your final LaTeX file(optional):  \n> ")
-#	files = read(filename)
-        files = [filename+".sty"];
+
+def executeThis():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("sty_file", help="the .sty-file for which a .pdf-file shall be created")
+	parser.add_argument("-c","--createPDF", help="use if you want to create the .pdf directly",action="store_true")
+	parser.add_argument("-o","--overwrite", help="overwrites any existent files/folders if used (USE WITH CARE!)", action="store_true")
+	parser_args = parser.parse_args()
+	createPDF = parser_args.createPDF
+	filename = os.path.splitext(parser_args.sty_file)[0] # splits filename into base and extension and chooses base
+	if os.path.isdir(path+os.sep+filename):
+		print(path+os.sep+filename)
+		if not parser_args.overwrite:
+			try: overwrite = raw_input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):  \n> ")
+			except NameError: overwrite = input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):	\n> ")
+		if parser_args.overwrite or overwrite:
+			shutil.rmtree(filename)
+		else:
+			return
+	os.makedirs(path+os.sep+filename)
+	open(path+os.sep+filename+os.sep+filename+'.tex', 'w')
+
+	title = ''
+	author = ''
+	subtitle = ''
+
+	files = [filename+".sty"];
 	print("creates .sty file")
 	write(files, filename, title, author, subtitle)
-        if createPDF:
-                print("starts to create .pdf file")
-                os.chdir(filename)
-                err_code = os.system("pdflatex -interaction nonstopmode "+filename+".tex")
-                err_code |=os.system("pdflatex -interaction nonstopmode "+filename+".tex")
-                if (err_code==0):
-                        print("\n"+filename+".pdf successfully created! \n")
-                else:
-                        print("\nWARNING: The compilation of "+filename+".tex returned a non zero exit code.\n         Please check the output.\n")
-                os.chdir("..")
-        return
+	if createPDF:
+		print("starts to create .pdf file")
+		os.chdir(filename)
+		err_code = os.system("pdflatex -interaction nonstopmode "+filename+".tex")
+		err_code |=os.system("pdflatex -interaction nonstopmode "+filename+".tex")
+		if (err_code==0):
+			print("\n"+filename+".pdf successfully created! \n")
+		else:
+			print("\nWARNING: The compilation of "+filename+".tex returned a non zero exit code.\n		   Please check the output.\n")
+		os.chdir("..")
+	return
 
 
 print("==================================================================================================================")
-print("||Created in June 2016 by Robin Jacob								               ||")
-print("||													       ||")
+print("||Created in June 2016 by Robin Jacob                                                                           ||")
+print("||                                                                                                              ||")
 print("||This script converts .sty files into pdf files with the translations in between the commands and the symbols. ||")
 print("==================================================================================================================")
 executeThis()
