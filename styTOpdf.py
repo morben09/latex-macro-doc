@@ -193,17 +193,15 @@ def executeThis():
 		filename = os.path.splitext(basename)[0] # splits filename into base and extension and chooses base
 	else:
 		filename = parser_args.filename
-	print filename
-	if os.path.isdir(path+os.sep+filename):
-		print(path+os.sep+filename)
+	dirname = "." + os.sep + filename + os.sep
+	if os.path.isdir(dirname):
 		if not parser_args.overwrite:
 			try: overwrite = raw_input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):  \n> ")
 			except NameError: overwrite = input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):	\n> ")
 		if parser_args.overwrite or overwrite:
-			shutil.rmtree(filename)
+			shutil.rmtree(dirname)
 		else:
 			return
-	dirname = path+os.sep+filename+os.sep
 	os.makedirs(dirname)
 	open(dirname+filename+'.tex', 'w')
 
