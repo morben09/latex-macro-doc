@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 # created in 06/2016 by Robin Jacob
 # edited by Robin Jacob, Thorben Casper and Yun Ouedraogo
-# using parts of the latex template from the "VAdF"-lab at the TU Darmstadt during SoSe 2016
 
 import os
 import shutil
@@ -235,4 +234,5 @@ print("||Created in June 2016 by Robin Jacob                                    
 print("||                                                                                                              ||")
 print("||This script converts .sty files into pdf files with the translations in between the commands and the symbols. ||")
 print("==================================================================================================================")
-executeThis()
+if __name__ == "__main__":
+	executeThis()
