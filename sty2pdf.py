@@ -25,7 +25,7 @@ def format_section(commands, comments):
 	return ''.join([table_opening, contents, table_closing])
 
 
-def write(list, df, mf, title, author, subtitle):
+def write(list, df, mf, title, author, subtitle, addPkg):
 	latexfiles = []
 	if list:
 		#iterates over all selected files
@@ -135,14 +135,19 @@ def write(list, df, mf, title, author, subtitle):
 			tex_file.close()
 			print(myfile+".tex created")
 
-		writefilename(list, df, mf, title, author, subtitle)
+		# copy additional packages
+		for filepath in addPkg:
+			myfile = os.path.basename(filepath)
+			shutil.copy2(filepath, df+myfile)
+
+		writefilename(list, df, mf, title, author, subtitle, addPkg)
 	else:
 		shutil.rmtree(mf)
 		print("No data selected, aborting...")
 
 
 
-def writefilename (mfiles, mdirname, mfilename, title, author, subtitle):
+def writefilename (mfiles, mdirname, mfilename, title, author, subtitle, addPkg):
 	f = open(mdirname+mfilename+'.tex', 'w')
 	f.write("\\documentclass[scrreprt,colorback,accentcolor=tud9b, 11pt]{tudreport}"+"\n")
 	f.write("\\usepackage[utf8]{inputenc}"+"\n")
@@ -154,6 +159,11 @@ def writefilename (mfiles, mdirname, mfilename, title, author, subtitle):
 	f.write("\\usepackage{longtable}"+"\n")
 	f.write("\\usepackage{listings}"+"\n")
 	f.write("\\usepackage{hhline}"+"\n")
+    # add additional packages given by --package option to preamble
+	for pck in addPkg:
+		pck2 = os.path.splitext(os.path.basename(pck))[0]
+		f.write("\\usepackage{"+pck2+"}"+"\n")
+    # add import of packages to preamble
 	for pck in mfiles:
 		pck2 = os.path.splitext(os.path.basename(pck))[0]
 		f.write("\\usepackage{"+pck2+"}"+"\n")
@@ -171,6 +181,7 @@ def writefilename (mfiles, mdirname, mfilename, title, author, subtitle):
 	f.write("\\maketitle"+"\n")
 	f.write("\\tableofcontents"+"\n")
 	f.write("\\newpage"+"\n")
+    # include packages as subfiles
 	for fe in mfiles:
 		fe2 = os.path.basename(fe)
 		f.write("\\subfile{"+fe2+".tex}"+"\n")
@@ -184,6 +195,7 @@ def executeThis():
 	parser.add_argument("-c","--createPDF", help="use if you want to create the .pdf directly",action="store_true")
 	parser.add_argument("-o","--overwrite", help="overwrites any existent files/folders if used (USE WITH CARE!)", action="store_true")
 	parser.add_argument("-f","--filename", help="file and pathname of PDF", type=str)
+	parser.add_argument("-p","--package", help="use if an additional package shall be loaded when generating the doc. However, this package will not be part of the doc.", type=argparse.FileType('r'), nargs='+')
 	parser_args = parser.parse_args()
 	createPDF = parser_args.createPDF
 	
@@ -207,6 +219,11 @@ def executeThis():
 	title = ''
 	author = ''
 	subtitle = ''
+	
+	addPkgFiles = []
+	if parser_args.package:
+		for f in parser_args.package:
+			addPkgFiles.append(os.path.abspath(f.name))
 
 	# this loop can surely be done better
 	styfiles = []
@@ -214,7 +231,7 @@ def executeThis():
 		styfiles.append(os.path.abspath(f.name)) 
 
 	print("creates .sty file")
-	write(styfiles, dirname, filename, title, author, subtitle)
+	write(styfiles, dirname, filename, title, author, subtitle, addPkgFiles)
 	if createPDF:
 		print("starts to create .pdf file")
 		oldpath = path
