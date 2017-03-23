@@ -1,8 +1,15 @@
 %--------------------------------------------------------------------------------------
-%%% This is a chapter
+%%% This is a chapter triggered by a line starting with %%%
 %--------------------------------------------------------------------------------------
 
-%% This is a section
+%# This package serves as a minimal example for the creation of documentation for .sty-files.
+%# To add plain text at an arbitrary position in this .pdf, use %# at the beginning of a line in the .sty-file.
+%# The position of the %#-line in the .sty-file determines the position of that line in the final .pdf.
+%#
+%# Chapters are triggered by lines starting with %%% while sections are triggered by lines starting with %%.
+%# To use comments along with the commands, use %-% directly after a line in which the command is defined.
+
+%% This is a section triggered by a line starting with %%
 \newcommand{\ex}{\vec{e}_x}
 %-% Comment for the macro ex
 \newcommand{\ey}{\vec{e}_y}%-% Comment for the macro ey

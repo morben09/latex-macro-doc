@@ -42,6 +42,7 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 			# some settings and parameters
 			tabularbegin = False	# ensure that no table is closed without a table opened before
 			command = False
+			doc_flag = r'%#'
 			comment_flag = r'%-%'
 			chapter_flag = r'%%%'
 			section_flag = r'%%'
@@ -58,8 +59,12 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 				if not line or line.find(r'\catcode') is 0:
 					continue
 
+				# line starts with documentation flag
+				if line[0:2] == doc_flag:
+					# don't forget to escape characters that can lead to problems
+					tex_file.write(line[2:].strip().replace(r'%','\%').replace('#','\#')+'\n')
 				# line gives the title of a new chapter
-				if chapter_flag in line:
+				elif line[0:3] == chapter_flag:
 					# if a command was found before, flush out all the commands for the previous chapter
 					if command:
 						current_commands.append(current_command)
@@ -69,9 +74,9 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 						current_command, current_comment = '', ''
 						command = False
 					tex_file.write(r'\newpage'+'\n')
-					tex_file.write(r'\chapter{'+line.replace('%','').strip()+'}'+'\n')
+					tex_file.write(r'\chapter{'+line[3:].replace(r'%','\%').strip()+'}'+'\n')
 				# line gives the title of a new section
-				elif section_flag in line:
+				elif line[0:2] == section_flag:
 					# if a command was found before, flush out all the commands for the previous section
 					if command:
 						current_commands.append(current_command)
@@ -80,9 +85,9 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 						current_commands, current_comments = [], []
 						current_command, current_comment = '', ''
 						command = False
-					tex_file.write(r'\section{'+line.replace('%','').strip()+'}'+'\n')
+					tex_file.write(r'\section{'+line[2:].replace(r'%','\%').strip()+'}'+'\n')
 				# if \def is found in a line, the corresponding command is added to command list
-				elif r'\def' in line:
+				elif line[0:4] == r'\def':
 					if command:
 						current_commands.append(current_command)
 						current_comments.append(current_comment)
