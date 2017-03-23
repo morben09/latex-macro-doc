@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# created in 06/2016 by Robin Jacob
+# created in 2016/06 by Robin Jacob
 # edited by Robin Jacob, Thorben Casper and Yun Ouedraogo
 
 import os
@@ -8,9 +8,9 @@ import shutil
 import argparse
 
 path = os.path.dirname(os.path.abspath(__file__))
-print(path)
 
-def format_section(commands, comments):
+def writeSectionTable(commands, comments):
+	# depending on whether there are comments, a table with either 2 or 3 columns is created
 	if ''.join(comments):
 		table_opening = r'\begin{longtable}{||l|r|l||}'+'\n'+r'\hline'+'\n'+r'\textbf{symbol} & \textbf{shortcut} & \textbf{comment} \\'+'\n'+r'\hhline{|=|=|=|}'+'\n'
 		table_closing = r'\hline'+'\n'+r'\end{longtable}'+'\n'
@@ -25,18 +25,22 @@ def format_section(commands, comments):
 	return ''.join([table_opening, contents, table_closing])
 
 
-def write(list, df, mf, title, author, subtitle, addPkg):
+def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
+	print("creating .sty file")
 	latexfiles = []
-	if list:
-		#iterates over all selected files
-		for myfilepath in list:
+	# check whether list of .sty-files is empty. If it is, remove folder and exit
+	if styfiles:
+		# iterates over all selected files
+		for currentfile in styfiles:
+			# loads all lines in current .sty-file into an array
+			with open(currentfile, 'r') as f:
+				sty_contents = f.read().split('\n')
+			# copy current .sty-file to new subdirectory
+			currentStyFile = os.path.basename(currentfile)
+			shutil.copy2(currentfile, dirname)
 
-			with open(myfilepath, 'r') as fl:
-				sty_contents = fl.read().split('\n')
-			myfile = os.path.basename(myfilepath)
-			shutil.copy2(myfilepath, df+myfile)
-			tex_file = open(df+myfile+'.tex', 'w')
-			tabularbegin = False									#ensure that at the end no table is closed without a table opened before (avoiding latex error)
+			# some settings and parameters
+			tabularbegin = False	# ensure that no table is closed without a table opened before
 			command = False
 			comment_flag = r'%-%'
 			chapter_flag = r'%%%'
@@ -45,32 +49,39 @@ def write(list, df, mf, title, author, subtitle, addPkg):
 			current_command, current_comment = '', ''
 			current_commands, current_comments = [], []
 
-			# iterates over all lines in file f1
+			# opens .tex-subfile
+			tex_file = open(dirname+currentStyFile+'.tex', 'w')
+			# iterates over all lines in .sty-file
 			for line in sty_contents:
 
-				# Empty lines and catcode statements are not macros
+				# empty lines and catcode statements are not macros
 				if not line or line.find(r'\catcode') is 0:
 					continue
 
+				# line gives the title of a new chapter
 				if chapter_flag in line:
+					# if a command was found before, flush out all the commands for the previous chapter
 					if command:
 						current_commands.append(current_command)
 						current_comments.append(current_comment)
-						tex_file.write(format_section(current_commands, current_comments))
+						tex_file.write(writeSectionTable(current_commands, current_comments))
 						current_commands, current_comments = [], []
 						current_command, current_comment = '', ''
 						command = False
 					tex_file.write(r'\newpage'+'\n')
 					tex_file.write(r'\chapter{'+line.replace('%','').strip()+'}'+'\n')
+				# line gives the title of a new section
 				elif section_flag in line:
+					# if a command was found before, flush out all the commands for the previous section
 					if command:
 						current_commands.append(current_command)
 						current_comments.append(current_comment)
-						tex_file.write(format_section(current_commands, current_comments))
+						tex_file.write(writeSectionTable(current_commands, current_comments))
 						current_commands, current_comments = [], []
 						current_command, current_comment = '', ''
 						command = False
 					tex_file.write(r'\section{'+line.replace('%','').strip()+'}'+'\n')
+				# if \def is found in a line, the corresponding command is added to command list
 				elif r'\def' in line:
 					if command:
 						current_commands.append(current_command)
@@ -79,12 +90,12 @@ def write(list, df, mf, title, author, subtitle, addPkg):
 					else:
 						tabularbegin = True
 					command = True
+					# extract command from current line
 					startfbs = line.find('\\')					#startfirstbackslash
 					startsbs = line[startfbs+1:].find('\\')		#startsecondbackslash
 					endsbs = line.find('{')
 					if line[startsbs+1:endsbs].find('#') == -1:
 						current_command = line[startsbs+1:endsbs]
-						#tex_file.write(cmd+r' & \begin{lstlisting}'+'\n'+cmd+r' \end{lstlisting} & ')
 					else:
 						hash_index =  line.find('#')
 						cmd = line[startsbs+1:hash_index]
@@ -95,7 +106,7 @@ def write(list, df, mf, title, author, subtitle, addPkg):
 							post.append('{'+chr(counter+97)+'}')
 						pst = ''.join(post)
 						current_command = cmd+pst
-						#tex_file.write(cmd+pst+r' & \begin{lstlisting}'+'\n'+cmd+pst+r' \end{lstlisting} & ')
+				# line starts with a backslash as e.g. \newcommand would
 				elif line[0] == '\\':
 					if command:
 						current_commands.append(current_command)
@@ -104,10 +115,11 @@ def write(list, df, mf, title, author, subtitle, addPkg):
 					else:
 						tabularbegin = True
 					command = True
-					startfb = line.find('{')					#startfirstbracket
-					endfb = line.find('}')						#endfirstbracket
-					startrb = line.find('[')					#startrectangularbracket
-					endrb = line.find(']')						#endrectangularbracket
+					# extract command from current line
+					startfb = line.find('{')					#startfirstbrace
+					endfb = line.find('}')						#endfirstbrace
+					startrb = line.find('[')					#startbracket
+					endrb = line.find(']')						#endbracket
 					nmbr = line[startrb+1:endrb].strip()
 					cmd = line[startfb+1:endfb]
 					if line[endfb+1] =='[':
@@ -117,37 +129,35 @@ def write(list, df, mf, title, author, subtitle, addPkg):
 							post.append("{"+chr(counter+97)+"}")
 						pst = ''.join(post)
 						current_command = cmd+pst
-						#tex_file.write('$'+cmd+pst+r'$ & \begin{lstlisting}'+'\n'+cmd+pst+r' \end{lstlisting} & ')
 					else:
 						current_command = cmd
-						#tex_file.write('$'+cmd+r'$ & \begin{lstlisting}'+'\n'+cmd+r' \end{lstlisting} & ')
 
+				# if a comment is detected in a line
 				if comment_flag in line:
 					comment_begin_index = line.find(comment_flag)+len(comment_flag)
 					current_comment = line[comment_begin_index:].strip()
 
+			# flush out commands to .tex-file if not have been written out yet
 			if tabularbegin:
 				current_commands.append(current_command)
 				current_comments.append(current_comment)
-				tex_file.write(format_section(current_commands, current_comments))
+				tex_file.write(writeSectionTable(current_commands, current_comments))
 				current_commands, current_comments = [], []
-			latexfiles.append(df+myfile+'.tex')
+			latexfiles.append(dirname+currentStyFile+'.tex')
 			tex_file.close()
-			print(myfile+".tex created")
+			print(currentStyFile+".tex created")
 
 		# copy additional packages
 		for filepath in addPkg:
-			myfile = os.path.basename(filepath)
-			shutil.copy2(filepath, df+myfile)
+			currentStyFile = os.path.basename(filepath)
+			shutil.copy2(filepath, dirname+currentStyFile)
 
-		writefilename(list, df, mf, title, author, subtitle, addPkg)
 	else:
-		shutil.rmtree(mf)
+		shutil.rmtree(texFileBase)
 		print("No data selected, aborting...")
 
 
-
-def writefilename (mfiles, mdirname, mfilename, title, author, subtitle, addPkg):
+def writeMainTexFile (mfiles, mdirname, mfilename, title, author, subtitle, addPkg):
 	f = open(mdirname+mfilename+'.tex', 'w')
 	f.write("\\documentclass[scrreprt,colorback,accentcolor=tud9b, 11pt]{tudreport}"+"\n")
 	f.write("\\usepackage[utf8]{inputenc}"+"\n")
@@ -169,6 +179,7 @@ def writefilename (mfiles, mdirname, mfilename, title, author, subtitle, addPkg)
 	for pck in mfiles:
 		pck2 = os.path.splitext(os.path.basename(pck))[0]
 		f.write("\\usepackage{"+pck2+"}"+"\n")
+	# write body of latex document
 	f.write("\\begin{document}"+"\n")
 	if title and (not title.isspace()):
 		f.write("\\title{"+title+"}"+"\n")
@@ -188,11 +199,15 @@ def writefilename (mfiles, mdirname, mfilename, title, author, subtitle, addPkg)
 		fe2 = os.path.basename(fe)
 		f.write("\\subfile{"+fe2+".tex}"+"\n")
 	f.write("\\end{document}"+"\n")
-	print("Main .tex File created ("+mfilename+".tex)!")
+	f.close()
+	print("main .tex File created ("+mfilename+".tex)!")
 
 
-def executeThis():
-	parser = argparse.ArgumentParser()
+if __name__ == "__main__":
+	# parse input arguments and create help text
+	parser = argparse.ArgumentParser(
+		description='''This script converts .sty files into pdf files with the translations in between the commands and the symbols.''',
+		epilog='''Created in June 2016 by Robin Jacob and edited by Thorben Casper and Yun Ouédraogo''')
 	parser.add_argument("sty_files", help=".sty-files for which a .pdf-file shall be created",type=argparse.FileType('r'), nargs='+')
 	parser.add_argument("-c","--createPDF", help="use if you want to create the .pdf directly",action="store_true")
 	parser.add_argument("-o","--overwrite", help="overwrites any existent files/folders if used (USE WITH CARE!)", action="store_true")
@@ -201,12 +216,14 @@ def executeThis():
 	parser_args = parser.parse_args()
 	createPDF = parser_args.createPDF
 	
+	# check whether name of output .pdf-file is given. If not, use texFile of .sty file as texFile of .pdf file
 	if not parser_args.filename:
-		basename = os.path.basename(parser_args.sty_files[0].name)
-		filename = os.path.splitext(basename)[0] # splits filename into base and extension and chooses base
+		texFile = os.path.basename(parser_args.sty_files[0].name)
+		texFileBase = os.path.splitext(texFile)[0]
 	else:
-		filename = parser_args.filename
-	dirname = "." + os.sep + filename + os.sep
+		texFileBase = parser_args.filename
+	dirname = "." + os.sep + texFileBase + os.sep
+	# check whether directory already exists and give a warning if it does. Otherwise, create directory
 	if os.path.isdir(dirname):
 		if not parser_args.overwrite:
 			try: overwrite = raw_input("File/path already existent. Do you want to overwrite (CAUTION: This will delete the whole folder including its contents)? (y/n):  \n> ")
@@ -214,44 +231,37 @@ def executeThis():
 		if parser_args.overwrite or overwrite:
 			shutil.rmtree(dirname)
 		else:
-			return
+			quit()		
 	os.makedirs(dirname)
-	open(dirname+filename+'.tex', 'w')
 
-	title = ''
-	author = ''
-	subtitle = ''
 	
+	# loads additional packages if required for generating the doc using pdflatex
 	addPkgFiles = []
 	if parser_args.package:
 		for f in parser_args.package:
 			addPkgFiles.append(os.path.abspath(f.name))
 
-	# this loop can surely be done better
+	# creates an array that contains all sty-files given as script input
 	styfiles = []
 	for f in parser_args.sty_files:
 		styfiles.append(os.path.abspath(f.name)) 
 
-	print("creates .sty file")
-	write(styfiles, dirname, filename, title, author, subtitle, addPkgFiles)
+	# creates .tex-files from .sty-input
+	title = ''
+	author = ''
+	subtitle = ''
+	writeSubTexFiles(styfiles, dirname, texFileBase, addPkgFiles)
+	writeMainTexFile(styfiles, dirname, texFileBase, title, author, subtitle, addPkgFiles)
+
+	# compiles using pdflatex if createPDF flag is set
 	if createPDF:
-		print("starts to create .pdf file")
+		print("creating .pdf file")
 		oldpath = path
 		os.chdir(dirname)
-		err_code = os.system("pdflatex -interaction nonstopmode "+filename+".tex")
-		err_code |=os.system("pdflatex -interaction nonstopmode "+filename+".tex")
+		err_code = os.system("pdflatex -interaction nonstopmode "+texFileBase+".tex")
+		err_code |=os.system("pdflatex -interaction nonstopmode "+texFileBase+".tex")
 		if (err_code==0):
-			print("\n"+filename+".pdf successfully created! \n")
+			print("\n"+texFileBase+".pdf successfully created! \n")
 		else:
-			print("\nWARNING: The compilation of "+filename+".tex returned a non zero exit code.\n		   Please check the output.\n")
+			print("\nWARNING: The compilation of "+texFileBase+".tex returned a non zero exit code.\n		   Please check the output.\n")
 		os.chdir(oldpath)
-	return
-
-
-print("==================================================================================================================")
-print("||Created in June 2016 by Robin Jacob                                                                           ||")
-print("||                                                                                                              ||")
-print("||This script converts .sty files into pdf files with the translations in between the commands and the symbols. ||")
-print("==================================================================================================================")
-if __name__ == "__main__":
-	executeThis()
