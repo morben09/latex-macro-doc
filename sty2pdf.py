@@ -111,8 +111,8 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 							post.append('{'+chr(counter+97)+'}')
 						pst = ''.join(post)
 						current_command = cmd+pst
-				# line starts with a backslash as e.g. \newcommand would
-				elif line[0] == '\\':
+				# line starts \newcommand
+				elif line[0:11] == '\\newcommand':
 					if command:
 						current_commands.append(current_command)
 						current_comments.append(current_comment)
@@ -136,6 +136,12 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 						current_command = cmd+pst
 					else:
 						current_command = cmd
+				# line starts with \RequirePackage
+				elif line[0:15] == '\\RequirePackage':
+					startfb = line.find('{')                    #startfirstbrace
+					endfb = line.find('}')                      #endfirstbrace
+					pkg = line[startfb+1:endfb]
+					addPkg.append(pkg+'.sty');
 
 				# if a comment is detected in a line
 				if comment_flag in line:
@@ -155,7 +161,9 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 		# copy additional packages
 		for filepath in addPkg:
 			currentStyFile = os.path.basename(filepath)
-			shutil.copy2(filepath, dirname+currentStyFile)
+			if filepath[0:4] == 'temf':
+				shutil.copy2(filepath, dirname+currentStyFile)
+		return addPkg
 
 	else:
 		shutil.rmtree(texFileBase)
@@ -255,7 +263,7 @@ if __name__ == "__main__":
 	title = ''
 	author = ''
 	subtitle = ''
-	writeSubTexFiles(styfiles, dirname, texFileBase, addPkgFiles)
+	addPkgFiles = writeSubTexFiles(styfiles, dirname, texFileBase, addPkgFiles)
 	writeMainTexFile(styfiles, dirname, texFileBase, title, author, subtitle, addPkgFiles)
 
 	# compiles using pdflatex if createPDF flag is set
