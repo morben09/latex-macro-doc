@@ -224,7 +224,7 @@ if __name__ == "__main__":
 	parser.add_argument("sty_files", help=".sty-files for which a .pdf-file shall be created",type=argparse.FileType('r'), nargs='+')
 	parser.add_argument("-c","--createPDF", help="use if you want to create the .pdf directly",action="store_true")
 	parser.add_argument("-o","--overwrite", help="overwrites any existent files/folders if used (USE WITH CARE!)", action="store_true")
-	parser.add_argument("-f","--filename", help="file and pathname of PDF", type=str)
+	parser.add_argument("-f","--filename", help="filename to final .pdf (including path without extension)", type=str)
 	parser.add_argument("-p","--package", help="use if an additional package shall be loaded when generating the doc. However, this package will not be part of the doc.", type=argparse.FileType('r'), nargs='+')
 	parser_args = parser.parse_args()
 	createPDF = parser_args.createPDF
@@ -233,9 +233,14 @@ if __name__ == "__main__":
 	if not parser_args.filename:
 		texFile = os.path.basename(parser_args.sty_files[0].name)
 		texFileBase = os.path.splitext(texFile)[0]
+		texDir = texFileBase
 	else:
-		texFileBase = parser_args.filename
-	dirname = "." + os.sep + texFileBase + os.sep
+		texDir = os.path.dirname(parser_args.filename)
+		texFileBase = os.path.basename(parser_args.filename)
+		texFile = texFileBase + '.sty'
+	print(texFile)
+	print(texFileBase)
+	dirname = "." + os.sep + texDir + os.sep
 	# check whether directory already exists and give a warning if it does. Otherwise, create directory
 	if os.path.isdir(dirname):
 		if not parser_args.overwrite:
