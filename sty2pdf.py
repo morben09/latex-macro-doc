@@ -240,7 +240,14 @@ if __name__ == "__main__":
 		texFile = texFileBase + '.sty'
 	print(texFile)
 	print(texFileBase)
-	dirname = "." + os.sep + texDir + os.sep
+	
+	# check if absolute path is used
+	if texDir[0]=="/":
+		dirname = texDir + os.sep
+	else:
+		dirname = "." + os.sep + texDir + os.sep
+	print(dirname)
+
 	# check whether directory already exists and give a warning if it does. Otherwise, create directory
 	if os.path.isdir(dirname):
 		if not parser_args.overwrite:
