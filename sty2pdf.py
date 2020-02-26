@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # created in 2016/06 by Robin Jacob
-# edited by Robin Jacob, Thorben Casper and Yun Ouedraogo
+# edited by Robin Jacob, Thorben Casper and Yun Ouédraogo
 
 import os
 import shutil
