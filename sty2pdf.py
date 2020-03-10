@@ -184,6 +184,7 @@ def writeMainTexFile (mfiles, mdirname, mfilename, title, author, subtitle, addP
 	f.write("\\usepackage{longtable}"+"\n")
 	f.write("\\usepackage{listings}"+"\n")
 	f.write("\\usepackage{hhline}"+"\n")
+	f.write("\\usepackage{hyperref}"+"\n")
     # add additional packages given by --package option to preamble
 	for pck in addPkg:
 		pck2 = os.path.splitext(os.path.basename(pck))[0]
