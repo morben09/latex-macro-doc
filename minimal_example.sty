@@ -9,6 +9,8 @@
 %# Chapters are triggered by lines starting with %%% while sections are triggered by lines starting with %%.
 %# To use comments along with the commands, use %-% directly after a line in which the command is defined.
 
+\RequirePackage{tikz}
+
 %% This is a section triggered by a line starting with %%
 \newcommand{\ex}{\vec{e}_x}
 %-% Comment for the macro ex
@@ -27,3 +29,6 @@
 %% In this section, there are no comments
 \newcommand{\en}{\vec{e}_n}
 \newcommand{\et}{\vec{e}_t}
+
+%$! The commands in the following are not supported by sty2pdf, the reader is referred to the .sty-file itself.
+\tikzset{>=stealth}

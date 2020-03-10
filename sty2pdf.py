@@ -43,6 +43,7 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 			tabularbegin = False	# ensure that no table is closed without a table opened before
 			command = False
 			doc_flag = r'%#'
+			docOnly_flag = r'%$!'
 			comment_flag = r'%-%'
 			chapter_flag = r'%%%'
 			section_flag = r'%%'
@@ -63,6 +64,19 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 				if line[0:2] == doc_flag:
 					# don't forget to escape characters that can lead to problems
 					tex_file.write(line[2:].strip().replace(r'%','\%').replace('#','\#')+'\n')
+				# line contains plain documentation, rest of file will be ignored
+				elif line[0:3] == docOnly_flag:
+					# if a command was found before, flush out all the commands for the previous section
+					if command:
+						current_commands.append(current_command)
+						current_comments.append(current_comment)
+						tex_file.write(writeSectionTable(current_commands, current_comments))
+						current_commands, current_comments = [], []
+						current_command, current_comment = '', ''
+						command = False
+					tex_file.write(line[3:].strip())
+					tabularbegin = False
+					break
 				# line gives the title of a new chapter
 				elif line[0:3] == chapter_flag:
 					# if a command was found before, flush out all the commands for the previous chapter
