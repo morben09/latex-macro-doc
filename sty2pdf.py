@@ -25,7 +25,7 @@ def writeSectionTable(commands, comments):
 	return ''.join([table_opening, contents, table_closing])
 
 
-def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
+def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg, addPkgOpt):
 	print("creating .sty file")
 	latexfiles = []
 	# check whether list of .sty-files is empty. If it is, remove folder and exit
@@ -55,6 +55,7 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 			tex_file = open(dirname+currentStyFile+'.tex', 'w')
 			# iterates over all lines in .sty-file
 			for line in sty_contents:
+				line = line.strip()
 
 				# empty lines and catcode statements are not macros
 				if not line or line.find(r'\catcode') is 0:
@@ -154,8 +155,14 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 				elif line[0:15] == '\\RequirePackage':
 					startfb = line.find('{')                    #startfirstbrace
 					endfb = line.find('}')                      #endfirstbrace
+					startOpt = line.find('[')                   #startfirstbracket
+					endOpt = line.find(']')                     #endfirstbracket
 					pkg = line[startfb+1:endfb]
 					addPkg.append(pkg+'.sty');
+					if startOpt != -1:
+						addPkgOpt.append(line[startOpt+1:endOpt]);
+					else:
+						addPkgOpt.append('');
 
 				# if a comment is detected in a line
 				if comment_flag in line:
@@ -184,7 +191,7 @@ def writeSubTexFiles(styfiles, dirname, texFileBase, addPkg):
 		print("No data selected, aborting...")
 
 
-def writeMainTexFile (mfiles, mdirname, mfilename, title, author, subtitle, addPkg):
+def writeMainTexFile (mfiles, mdirname, mfilename, title, author, subtitle, addPkg, addPkgOpt):
 	f = open(mdirname+mfilename+'.tex', 'w')
 	f.write("\\documentclass[scrreprt,colorback,accentcolor=tud9b, 11pt]{tudreport}"+"\n")
 	f.write("\\usepackage[utf8]{inputenc}"+"\n")
@@ -199,11 +206,14 @@ def writeMainTexFile (mfiles, mdirname, mfilename, title, author, subtitle, addP
 	f.write("\\usepackage{listings}"+"\n")
 	f.write("\\usepackage{hhline}"+"\n")
 	f.write("\\usepackage{hyperref}"+"\n")
-    # add additional packages given by --package option to preamble
-	for pck in addPkg:
-		pck2 = os.path.splitext(os.path.basename(pck))[0]
-		f.write("\\usepackage{"+pck2+"}"+"\n")
-    # add import of packages to preamble
+  # add additional packages given by --package option to preamble
+	for i in range(len(addPkg)):
+		pck2 = os.path.splitext(os.path.basename(addPkg[i]))[0]
+		if addPkgOpt[i]:
+			f.write("\\usepackage["+addPkgOpt[i]+"]{"+pck2+"}"+"\n")
+		else:
+			f.write("\\usepackage{"+pck2+"}"+"\n")
+  # add import of packages to preamble
 	for pck in mfiles:
 		pck2 = os.path.splitext(os.path.basename(pck))[0]
 		f.write("\\usepackage{"+pck2+"}"+"\n")
@@ -277,9 +287,11 @@ if __name__ == "__main__":
 	
 	# loads additional packages if required for generating the doc using pdflatex
 	addPkgFiles = []
+	addPkgOptions = []
 	if parser_args.package:
 		for f in parser_args.package:
 			addPkgFiles.append(os.path.abspath(f.name))
+			addPkgOptions.append('')
 
 	# creates an array that contains all sty-files given as script input
 	styfiles = []
@@ -290,8 +302,8 @@ if __name__ == "__main__":
 	title = ''
 	author = ''
 	subtitle = ''
-	addPkgFiles = writeSubTexFiles(styfiles, dirname, texFileBase, addPkgFiles)
-	writeMainTexFile(styfiles, dirname, texFileBase, title, author, subtitle, addPkgFiles)
+	addPkgFiles = writeSubTexFiles(styfiles, dirname, texFileBase, addPkgFiles, addPkgOptions)
+	writeMainTexFile(styfiles, dirname, texFileBase, title, author, subtitle, addPkgFiles, addPkgOptions)
 
 	# compiles using pdflatex if createPDF flag is set
 	if createPDF:
